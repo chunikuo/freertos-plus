@@ -96,7 +96,11 @@ void cat_command(int n, char *argv[]){
 		return;
 	}
 
-	if(!filedump(argv[1]))
+	// combine romfs path and filename
+	char buf[128] = "/romfs/";
+	strcat(buf, argv[1]);
+
+	if(!filedump(buf))
 		fio_printf(2, "\r\n%s no such file or directory.\r\n", argv[1]);
 }
 

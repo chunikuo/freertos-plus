@@ -96,7 +96,7 @@ void cat_command(int n, char *argv[]){
 		return;
 	}
 
-	// combine romfs path and filename
+	// combine romfs path with filename
 	char buf[128] = "/romfs/";
 	strcat(buf, argv[1]);
 

@@ -3,6 +3,7 @@
 #include <semphr.h>
 #include <unistd.h>
 #include "fio.h"
+#include "clib.h"
 #include "filesystem.h"
 #include "romfs.h"
 #include "osdebug.h"
@@ -68,26 +69,55 @@ static off_t romfs_seek(void * opaque, off_t offset, int whence) {
 const uint8_t * romfs_get_file_by_hash(const uint8_t * romfs, uint32_t h, uint32_t * len) {
     const uint8_t * meta;
 
-    for (meta = romfs; get_unaligned(meta) && get_unaligned(meta + 4); meta += get_unaligned(meta + 4) + 8) {
+    for (meta = romfs; get_unaligned(meta) && get_unaligned(meta + 4); meta += get_unaligned(meta + 4) + get_unaligned(meta + 8 + get_unaligned(meta + 4)) + 12) {
         if (get_unaligned(meta) == h) {
             if (len) {
-                *len = get_unaligned(meta + 4);
+                *len = get_unaligned(meta + 8 + get_unaligned(meta+4));
             }
-            return meta + 8;
+	    
+	    return meta + 4;				
+            //return meta + 12 + get_unaligned(meta+4);
         }
     }
 
     return NULL;
 }
 
+static int romfs_show(void * opaque, const char * path)
+{
+
+
+    char buf[256];
+    int namesize;
+    const uint8_t * meta;
+    //const uint8_t * file = romfs_get_file_by_hash(romfs, h, NULL);
+    //meta = opaque;
+    for (meta = (const uint8_t *)opaque; get_unaligned(meta) && get_unaligned(meta + 8 + get_unaligned(meta + 4)); meta += get_unaligned(meta + 4) + get_unaligned(meta + 8 + get_unaligned(meta + 4)) + 12) {
+	namesize = get_unaligned(meta + 4);
+
+	memcpy(buf, meta + 8, namesize);
+	buf[namesize] = '\0';
+
+	fio_printf(1, "%s\r\n", buf);
+    }
+
+    return 0;
+}
+
 static int romfs_open(void * opaque, const char * path, int flags, int mode) {
+
     uint32_t h = hash_djb2((const uint8_t *) path, -1);
     const uint8_t * romfs = (const uint8_t *) opaque;
     const uint8_t * file;
     int r = -1;
 
     file = romfs_get_file_by_hash(romfs, h, NULL);
+    file += get_unaligned(file) + 8;		
 
+
+    fio_printf(1, "path: %s, hash: %x\r\n", path, h);
+    //for( r = 0; r < 16; r++)	
+	//    fio_printf(1, "%x ", romfs[r] );
     if (file) {
         r = fio_open(romfs_read, NULL, romfs_seek, NULL, NULL);
         if (r > 0) {
@@ -101,5 +131,5 @@ static int romfs_open(void * opaque, const char * path, int flags, int mode) {
 
 void register_romfs(const char * mountpoint, const uint8_t * romfs) {
 //    DBGOUT("Registering romfs `%s' @ %p\r\n", mountpoint, romfs);
-    register_fs(mountpoint, romfs_open, (void *) romfs);
+    register_fs(mountpoint, romfs_open, romfs_show, (void *) romfs);
 }

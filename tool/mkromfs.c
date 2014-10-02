@@ -59,17 +59,34 @@ void processdir(DIR * dirp, const char * curpath, FILE * outfile, const char * p
                 perror("opening input file");
                 exit(-1);
             }
+	    // add hash info
             b = (hash >>  0) & 0xff; fwrite(&b, 1, 1, outfile);
             b = (hash >>  8) & 0xff; fwrite(&b, 1, 1, outfile);
             b = (hash >> 16) & 0xff; fwrite(&b, 1, 1, outfile);
             b = (hash >> 24) & 0xff; fwrite(&b, 1, 1, outfile);
+
+	    // add filename size (unsigned short int is 2 bytes)
+	    size = strlen(ent->d_name);
+	    b = (size >>  0) & 0xff; fwrite(&b, 1, 1, outfile);
+	    b = (size >>  8) & 0xff; fwrite(&b, 1, 1, outfile);
+	    b = (size >> 16) & 0xff; fwrite(&b, 1, 1, outfile);
+	    b = (size >> 24) & 0xff; fwrite(&b, 1, 1, outfile);
+
+	    // add filename (d_name[256])
+	    fwrite(ent->d_name, 1, size, outfile);
+
+	    // calculate file size
             fseek(infile, 0, SEEK_END);
             size = ftell(infile);
             fseek(infile, 0, SEEK_SET);
+
+	    // add size info
             b = (size >>  0) & 0xff; fwrite(&b, 1, 1, outfile);
             b = (size >>  8) & 0xff; fwrite(&b, 1, 1, outfile);
             b = (size >> 16) & 0xff; fwrite(&b, 1, 1, outfile);
             b = (size >> 24) & 0xff; fwrite(&b, 1, 1, outfile);
+
+	    // add context
             while (size) {
                 w = size > 16 * 1024 ? 16 * 1024 : size;
                 fread(buf, 1, w, infile);

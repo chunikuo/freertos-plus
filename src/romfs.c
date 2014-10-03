@@ -83,10 +83,8 @@ const uint8_t * romfs_get_file_by_hash(const uint8_t * romfs, uint32_t h, uint32
     return NULL;
 }
 
-static int romfs_show(void * opaque, const char * path)
+static int romfs_list(void * opaque, const char * path)
 {
-
-
     char buf[256];
     int namesize;
     const uint8_t * meta;
@@ -131,5 +129,5 @@ static int romfs_open(void * opaque, const char * path, int flags, int mode) {
 
 void register_romfs(const char * mountpoint, const uint8_t * romfs) {
 //    DBGOUT("Registering romfs `%s' @ %p\r\n", mountpoint, romfs);
-    register_fs(mountpoint, romfs_open, romfs_show, (void *) romfs);
+    register_fs(mountpoint, romfs_open, romfs_list, (void *) romfs);
 }

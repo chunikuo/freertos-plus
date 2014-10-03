@@ -65,7 +65,7 @@ int fs_open(const char * path, int flags, int mode) {
 }
 
 
-int fs_show(const char * path)
+int fs_list(const char * path)
 {
     const char * slash;
     uint32_t hash;

@@ -62,7 +62,7 @@ int parse_command(char *str, char *argv[]){
 void ls_command(int n, char *argv[]){
 
 	fio_printf(1, "\r\n");
-	fs_show("/romfs/");
+	fs_list("/romfs/");
 
 }
 
@@ -152,6 +152,12 @@ void test_command(int n, char *argv[]) {
     int error;
 
     fio_printf(1, "\r\n");
+
+    // create directory first
+    if (host_action(SYS_SYSTEM, "mkdir -p output")) {
+	fio_printf(1, "failed to create output. exiting...\r\n");
+	return;
+    }
 
     handle = host_action(SYS_OPEN, "output/syslog", 8);
     if(handle == -1) {

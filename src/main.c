@@ -116,6 +116,12 @@ void system_logger(void *pvParameters)
     int handle, error;
     const portTickType xDelay = 100000 / 100;
 
+    // create directory first
+    if (host_action(SYS_SYSTEM, "mkdir -p output")) {
+        fio_printf(1, "failed to create output. exiting...\r\n");
+        return;
+    }
+
     handle = host_action(SYS_OPEN, "output/syslog", 4);
     if(handle == -1) {
         fio_printf(1, "Open file error!\n");
